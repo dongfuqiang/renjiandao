@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 平滑过渡 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+
+/* 毛玻璃效果 */
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 响应式网格布局 */
+.grid-cols-t4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-t6 { grid-template-columns: repeat(6, 1fr); }
+.grid-cols-t8 { grid-template-columns: repeat(8, 1fr); }
+.grid-cols-t10 { grid-template-columns: repeat(10, 1fr); }
+.grid-cols-t12 { grid-template-columns: repeat(12, 1fr); }
+.grid-cols-t14 { grid-template-columns: repeat(14, 1fr); }
+.grid-cols-t16 { grid-template-columns: repeat(16, 1fr); }
+
+@media (max-width: 640px) {
+  .grid-cols-t4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-t6 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-t8 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-t10 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-t12 { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-t14 { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-t16 { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-cols-t4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-t6 { grid-template-columns: repeat(6, 1fr); }
+  .grid-cols-t8 { grid-template-columns: repeat(6, 1fr); }
+  .grid-cols-t10 { grid-template-columns: repeat(8, 1fr); }
+  .grid-cols-t12 { grid-template-columns: repeat(8, 1fr); }
+  .grid-cols-t14 { grid-template-columns: repeat(10, 1fr); }
+  .grid-cols-t16 { grid-template-columns: repeat(12, 1fr); }
+}
