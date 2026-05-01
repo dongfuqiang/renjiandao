@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin>
+  <id>mtab</id>
+  <name>MTab 书签管理插件</name>
+  <url>https://github.com</url>
+  <note>一个现代化的书签管理插件，支持自定义主题、壁纸和时间显示</note>
+  <version>1.0</version>
+  <adapted>1820</adapted>
+  <author>开发者</author>
+  <authorurl>https://github.com</author>
+  <source>
+    <level>1</level>
+  </source>
+  <advanced>
+    <dependency></dependency>
+  </advanced>
+  <language>
+    <item id="zh-cn">language/zh-cn.php</item>
+  </language>
+</plugin>
