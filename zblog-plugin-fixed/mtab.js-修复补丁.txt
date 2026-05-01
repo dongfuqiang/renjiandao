@@ -1,0 +1,109 @@
+/*
+ * MTAB JS 修复补丁
+ * 请根据原始文件找到对应位置进行替换
+ */
+
+// =========================================
+// 1. 修复 switchCateWithAnimation 函数
+// 位置：文件末尾附近
+// =========================================
+
+/* 【替换前】找到这段重复/截断的代码，删除并替换 */
+if (direction === 'up') {
+    newMainInfo.style.transform = 'translateY(60px)';
+} else {
+    newMainInfo.style.transform = 'scale(1.05)';
+}
+newMainInfo.style.opacity = '0';
+newMainInfo.offsetHeight;
+newMainInfo.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+newMainInfo.style.transform = 'translateY(0) scale(1)';
+newMainInfo.style.opacity = '1';
+    }
+}
+
+
+      newMainInfo.style.transform = 'scale(1.05)';
+                    }
+                    newMainInfo.style.opacity = '0';
+                    newMainInfo.offsetHeight;
+                    newMainInfo.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    newMainInfo.style.transform = 'translateY(0) scale(1)';
+                    newMainInfo.style.opacity = '1';
+
+/* 【替换后】整个函数替换为： */
+function switchCateWithAnimation(url, direction) {
+    var mainInfo = document.querySelector('.main-info');
+    if (mainInfo) {
+        mainInfo.style.transition = 'all 0.25s ease-out';
+        if (direction === 'down') {
+            mainInfo.style.transform = 'translateY(-60px)';
+        } else if (direction === 'up') {
+            mainInfo.style.transform = 'translateY(60px)';
+        } else {
+            mainInfo.style.transform = 'scale(0.95)';
+        }
+        mainInfo.style.opacity = '0';
+
+        setTimeout(function() {
+            txpostajax(url);
+
+            setTimeout(function() {
+                var newMainInfo = document.querySelector('.main-info');
+                if (newMainInfo) {
+                    if (direction === 'down') {
+                        newMainInfo.style.transform = 'translateY(60px)';
+                    } else if (direction === 'up') {
+                        newMainInfo.style.transform = 'translateY(-60px)';
+                    } else {
+                        newMainInfo.style.transform = 'scale(1.05)';
+                    }
+                    newMainInfo.style.opacity = '0';
+                    newMainInfo.offsetHeight;
+                    newMainInfo.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    newMainInfo.style.transform = 'translateY(0) scale(1)';
+                    newMainInfo.style.opacity = '1';
+                }
+            }, 80);
+        }, 250);
+    } else {
+        txpostajax(url);
+    }
+}
+
+// =========================================
+// 2. 修复滚轮事件，允许页面正常滚动
+// 位置：文件末尾
+// =========================================
+
+/* 【替换前】找到这段代码 */
+document.addEventListener('wheel', function(e) {
+    if ($('.tx-pop').length > 0 || $('.set-on-box').length > 0) {
+        return;
+    }
+    
+    e.preventDefault();
+    
+    if (e.deltaY > 20) {
+        switchCateByScroll('down');
+    } else if (e.deltaY < -20) {
+        switchCateByScroll('up');
+    }
+}, { passive: false });
+
+/* 【替换后】替换为 */
+document.addEventListener('wheel', function(e) {
+    if ($('.tx-pop').length > 0 || $('.set-on-box').length > 0) {
+        return;
+    }
+    
+    var deltaThreshold = 80; // 增大阈值，只有大幅滚动才切换分类
+    if (Math.abs(e.deltaY) > deltaThreshold) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+            switchCateByScroll('down');
+        } else if (e.deltaY < 0) {
+            switchCateByScroll('up');
+        }
+    }
+}, { passive: false });
