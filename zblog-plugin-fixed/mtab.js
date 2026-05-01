@@ -547,26 +547,34 @@ function editCurrentItem(e) {
             var img = currentRightClickItem.querySelector('.data-img') ? currentRightClickItem.querySelector('.data-img').src : '';
             var url = currentRightClickItem.querySelector('a') ? currentRightClickItem.querySelector('a').href : '';
             
-            var bgColor = currentRightClickItem.dataset.bgColor || '#ffffff';
+            var bgColor = $(currentRightClickItem).attr('data-bg-color') || '#ffffff';
             
-            var modalForm = document.querySelector('.add-tab-modal .tab-pane[data-tab="manual"]');
-            if (modalForm) {
-                modalForm.querySelector('[name="modal_name"]').value = name;
-                modalForm.querySelector('[name="modal_url"]').value = url;
-                modalForm.querySelector('[name="modal_img"]').value = img;
-                modalForm.querySelector('[name="modal_color"]').value = bgColor;
-                modalForm.querySelector('[name="modal_modify"]').value = delBtn.dataset.id;
+            function fillData() {
+                var $tab = $('.tab-pane[data-tab="manual"]');
+                
+                $tab.find('input[name="modal_name"]').val(name);
+                $tab.find('input[name="modal_img"]').val(img);
+                $tab.find('input[name="modal_url"]').val(url);
+                $tab.find('input[name="modal_color"]').val(bgColor);
+                $tab.find('input[name="modal_modify"]').val('on');
+                $('#getid').val(delBtn.dataset.id);
+                
+                var colorOptions = $tab.find('.color-option:not(.color-picker-wrap)');
+                colorOptions.removeClass('active');
+                colorOptions.each(function() {
+                    var optionColor = $(this).attr('data-color') || '';
+                    var targetColor = bgColor.toLowerCase().trim();
+                    if (optionColor === targetColor) {
+                        $(this).addClass('active');
+                    }
+                });
             }
             
-            var colorOptions = document.querySelectorAll('.color-option');
-            colorOptions.forEach(function(opt) {
-                opt.classList.remove('active');
-                if (opt.dataset.color === bgColor) {
-                    opt.classList.add('active');
-                }
-            });
+            fillData();
+            setTimeout(fillData, 200);
+            setTimeout(fillData, 500);
         }
-    }, 100);
+    }, 200);
 }
 
 function deleteCurrentItem(e) {
@@ -574,141 +582,549 @@ function deleteCurrentItem(e) {
     if (!currentRightClickItem) return;
     document.getElementById('rightMenu').style.display = 'none';
     
-    var delBtn = currentRightClickItem.querySelector('.del-btn a');
-    if (delBtn && delBtn.dataset.id) {
+    var delBtn = currentRightClickItem.querySelector('.del-btn a:first-child');
+    if (delBtn) {
         txPostIDpop(delBtn, '删除', '.del-box');
+    } else if (currentRightClickItem.classList.contains('sidebar-cate-item')) {
+        currentRightClickItem.setAttribute('data-type', 'cate');
+        txPostIDpop(currentRightClickItem, '删除', '.del-box');
     }
 }
 
+function changeWallpaper(n) {
+    var bg = window.zbp_host + 'zb_users/plugin/wx_nav/style/img/bg' + n + '.jpg';
+    document.body.style.backgroundImage = 'url(' + bg + ')';
+    zbp.cookie.set('bgcolor', bg, 365);
+    zbp.cookie.set('bgstyle', '2', 365);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var dockEnabled = zbp.cookie.get('dockEnabled') !== '0';
+        var bgColor = zbp.cookie.get('sidebarBgColor') || '#4b4b4b';
+        var opacity = (zbp.cookie.get('sidebarOpacity') || 17) / 100;
+        var blur = zbp.cookie.get('sidebarBlur');
+        var sidebar = document.querySelector('.mtab-sidebar');
+        var main = document.querySelector('.mtab-main');
+        var header = document.querySelector('.mtab-header');
+        var rgb = hexToRgb(bgColor);
+        var rgba = 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + opacity + ')';
+        
+        if (!dockEnabled) {
+            sidebar.style.transform = 'translateX(-100%)';
+            main.style.marginLeft = '0';
+            header.style.marginLeft = '0';
+        }
+        
+        sidebar.style.backgroundColor = rgba;
+        
+        if (blur === '0') {
+            sidebar.style.backdropFilter = 'none';
+        }
+        
+        var textColor = zbp.cookie.get('iconTextColor');
+        var iconBgColor = zbp.cookie.get('iconBgColor');
+        var size = zbp.cookie.get('iconSize');
+        var radius = zbp.cookie.get('iconRadius');
+        var gapX = zbp.cookie.get('iconGapX');
+        var gapY = zbp.cookie.get('iconGapY');
+        var icons = document.querySelectorAll('.set-item .tx-icon');
+        
+        if (textColor) {
+            icons.forEach(function(icon) {
+                icon.style.color = textColor;
+            });
+        }
+        
+        if (iconBgColor) {
+            icons.forEach(function(icon) {
+                icon.style.backgroundColor = iconBgColor;
+            });
+        }
+        
+        if (size) {
+            icons.forEach(function(icon) {
+                icon.style.width = size + 'px';
+                icon.style.height = size + 'px';
+                icon.style.fontSize = (size * 0.5) + 'px';
+            });
+        }
+        
+        if (radius) {
+            icons.forEach(function(icon) {
+                icon.style.borderRadius = radius + 'px';
+            });
+        }
+        
+        if (gapX) {
+            document.documentElement.style.setProperty('--icon-gap-x', gapX + 'px');
+        }
+        
+        if (gapY) {
+            document.documentElement.style.setProperty('--icon-gap-y', gapY + 'px');
+        }
+        
+        var lists = document.querySelectorAll('.nav-list ul');
+        lists.forEach(function(list) {
+            if (typeof Sortable !== 'undefined') {
+                Sortable.create(list, {
+                    animation: 150,
+                    handle: '.set-item',
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag'
+                });
+            }
+        });
+    }, 100);
+});
+
 function openAddTabModal(e, isEdit) {
     if (e) e.stopPropagation();
-    
+    document.getElementById('rightMenu').style.display = 'none';
     var modal = document.getElementById('addTabModal');
-    modal.classList.add('show');
-    
-    if (!isEdit) {
-        var modalForm = modal.querySelector('.tab-pane[data-tab="manual"]');
-        if (modalForm) {
-            modalForm.querySelector('[name="modal_name"]').value = '';
-            modalForm.querySelector('[name="modal_url"]').value = '';
-            modalForm.querySelector('[name="modal_img"]').value = '';
-            modalForm.querySelector('[name="modal_modify"]').value = '';
+    if (modal) {
+        modal.classList.add('show');
+        initModalTabs();
+        
+        var cid = window.current_cid || '2';
+        document.getElementById('getid').value = cid;
+        
+        if (!isEdit) {
+            $('#addTabModal .tx-set-data').val('');
+            $('#addTabModal input[name="modal_modify"]').val('');
+            $('input[name="modal_color"]').val('#ffffff');
         }
     }
 }
 
 function closeAddTabModal() {
     var modal = document.getElementById('addTabModal');
-    modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function initModalTabs() {
+    var tabBtns = document.querySelectorAll('.add-tab-modal .tab-btn');
+    var tabPanes = document.querySelectorAll('.add-tab-modal .tab-pane');
+    
+    tabBtns.forEach(function(btn) {
+        if (btn.dataset.tabBound) return;
+        btn.dataset.tabBound = '1';
+        
+        btn.addEventListener('click', function() {
+            var targetTab = this.dataset.tab;
+            
+            tabBtns.forEach(function(b) {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            tabPanes.forEach(function(pane) {
+                pane.classList.remove('active');
+                if (pane.dataset.tab === targetTab) {
+                    pane.classList.add('active');
+                }
+            });
+        });
+    });
 }
 
 function createNewFolder(e) {
     if (e) e.stopPropagation();
     document.getElementById('rightMenu').style.display = 'none';
-    txPostIDpop({dataset: {id: window.current_cid}}, '添加子分类', '.cate-box');
+    var fakeBtn = document.createElement('a');
+    txPostIDpop(fakeBtn, '添加分类', '.cate-box');
 }
 
 function openWallpaperSettings(e) {
     if (e) e.stopPropagation();
     document.getElementById('rightMenu').style.display = 'none';
+    toggleControlCenter();
 }
 
 function toggleBatchEdit(e) {
     if (e) e.stopPropagation();
     document.getElementById('rightMenu').style.display = 'none';
+    document.body.classList.toggle('tx-batch-edit');
+}
+
+function openSettings(e) {
+    if (e) e.stopPropagation();
+    document.getElementById('rightMenu').style.display = 'none';
+    toggleControlCenter();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        initCurrentCid();
+        
+        var modal = document.getElementById('addTabModal');
+        if (modal) {
+            modal.querySelector('.modal-mask').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAddTabModal();
+                }
+            });
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddTabModal();
+            }
+        });
+        
+        initModalTabs();
+        initColorOptions();
+    }, 200);
+});
+
+
+
+function initCurrentCid() {
+    var activeCate = document.querySelector('.nav-cate .on a');
+    if (activeCate) {
+        var cidMatch = activeCate.getAttribute('data-url').match(/cid=(\d+)/);
+        if (cidMatch) {
+            window.current_cid = cidMatch[1];
+        } else {
+            window.current_cid = '2';
+        }
+    } else {
+        window.current_cid = '2';
+    }
+}
+
+function initColorOptions() {
+    var colorOptions = document.querySelectorAll('.add-tab-modal .color-option:not(.color-picker-wrap)');
+    var colorPicker = document.getElementById('bgColorPicker');
+    var colorInput = document.querySelector('input[name="modal_color"]');
+    
+    colorOptions.forEach(function(option) {
+        if (option.dataset.colorBound) return;
+        option.dataset.colorBound = '1';
+        
+        option.addEventListener('click', function() {
+            colorOptions.forEach(function(o) {
+                o.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            var bgColor = this.style.backgroundColor || '#ffffff';
+            if (this.classList.contains('transparent')) {
+                bgColor = 'transparent';
+            }
+            if (colorInput) {
+                colorInput.value = bgColor;
+            }
+        });
+    });
+    
+    if (colorPicker && !colorPicker.dataset.bound) {
+        colorPicker.dataset.bound = '1';
+        
+        colorPicker.addEventListener('change', function() {
+            colorOptions.forEach(function(o) {
+                o.classList.remove('active');
+            });
+            if (colorInput) {
+                colorInput.value = this.value;
+            }
+        });
+    }
+}
+
+$(document).on('click', '.add-tab-modal .btn-submit-add', function(e) {
+    e.preventDefault();
+    var $tab = $('.tab-pane[data-tab="manual"]');
+    console.log('✅ 提交前颜色值:', $tab.find('input[name="modal_color"]').val());
+    
+    var form = $(this).closest('form')[0];
+    txpostsubmitCustom(form, 'post', 'add');
+});
+
+$(document).on('click', '.add-tab-modal .btn-get-icon', function(e) {
+    e.preventDefault();
+    console.log('点击了获取信息按钮');
+    
+    var $url = $('#addTabModal input[name="modal_url"]');
+    var getIconBtn = this;
+    
+    if ($url.length === 0) {
+        alert('页面加载异常，请刷新重试');
+        return;
+    }
+    var url = $url.val().trim();
+    console.log('输入的URL:', url);
+    
+    if (!url) {
+        alert('请先输入网址');
+        return;
+    }
+    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+        $url.val(url);
+    }
+    
+    getIconBtn.textContent = '获取中...';
+    getIconBtn.disabled = true;
+    
+    var faviconUrl = bloghost + 'zb_users/plugin/wx_nav/getFavicon/get.php?url=' + url;
+    console.log('Favicon地址:', faviconUrl);
+    $('#addTabModal input[name="modal_img"]').val(faviconUrl);
+    
+    fetchSiteMeta(url);
+});
+
+function extractDomain(url) {
+    var domain;
+    try {
+        domain = new URL(url).hostname;
+    } catch (e) {
+        domain = url.replace(/^(https?:\/\/)?/, '').replace(/\/.*$/, '');
+    }
+    return domain;
+}
+
+function fetchSiteMeta(url) {
+    var getIconBtn = document.querySelector('.add-tab-modal .btn-get-icon');
+    var domain = extractDomain(url);
+    var $name = $('#addTabModal input[name="modal_name"]');
+    var $info = $('#addTabModal textarea[name="modal_info"]');
+    
+    console.log('开始抓取:', url);
+    
+    var apiUrl = '/zb_users/plugin/wx_nav/plugin/get_meta.php?url=' + encodeURIComponent(url);
+    console.log('请求地址:', apiUrl);
+    
+    $.ajax({
+        type: "GET",
+        url: apiUrl,
+        dataType: "json",
+        timeout: 10000,
+        cache: false,
+        success: function(data){
+            console.log('请求成功:', data);
+            
+            if (data) {
+                if ($name.length > 0 && !$name.val() && data.title) {
+                    $name.val(data.title.trim().substring(0, 50));
+                }
+                if ($info.length > 0 && !$info.val() && data.description) {
+                    $info.val(data.description.trim().substring(0, 200));
+                }
+            }
+            
+            if ($name.length > 0 && !$name.val()) {
+                $name.val(formatDomain(domain));
+            }
+            
+            getIconBtn.textContent = '获取信息';
+            getIconBtn.disabled = false;
+            txTips('获取完成！');
+        },
+        error: function(xhr, status, error) {
+            console.log('请求失败:', status, error);
+            console.log('状态码:', xhr.status);
+            console.log('返回内容:', xhr.responseText);
+            
+            if ($name.length > 0 && !$name.val()) {
+                $name.val(formatDomain(domain));
+            }
+            
+            getIconBtn.textContent = '获取信息';
+            getIconBtn.disabled = false;
+            txTips('获取完成');
+        }
+    });
+}
+
+function formatDomain(domain) {
+    domain = domain.replace(/^www\./, '');
+    var parts = domain.split('.');
+    if (parts.length > 2) {
+        return parts.slice(0, -1).join('.');
+    }
+    return parts[0];
 }
 
 function saveTab(btn, continueAdd) {
-    var modalForm = btn.closest('.tab-pane');
-    var modal = btn.closest('.add-tab-modal');
+    console.log('saveTab 被调用, btn:', btn);
+    var form = $(btn).closest('.tx-form-dom')[0];
+    console.log('找到的 form:', form);
     
-    var name = modalForm.querySelector('[name="modal_name"]').value;
-    var url = modalForm.querySelector('[name="modal_url"]').value;
-    var img = modalForm.querySelector('[name="modal_img"]').value;
-    var modify = modalForm.querySelector('[name="modal_modify"]').value;
-    var color = modalForm.querySelector('[name="modal_color"]').value || '#ffffff';
-    var order = modalForm.querySelector('[name="modal_order"]').value || '99';
-    
-    if (!name || !url) {
-        alert('请填写名称和网址');
+    if (!form) {
+        alert('找不到表单元素，正在刷新页面...');
+        window.location.reload();
         return false;
     }
     
-    var formData = new FormData();
-    formData.append('name', name);
-    formData.append('url', url);
-    formData.append('img', img);
-    formData.append('info', modalForm.querySelector('[name="modal_info"]').value || '');
-    formData.append('order', order);
-    formData.append('color', color);
-    formData.append('author', modalForm.querySelector('[name="modal_author"]').value);
-    formData.append('token', modalForm.querySelector('[name="modal_token"]').value);
-    
-    if (modify) {
-        formData.append('modify', modify);
+    var modify = $('input[name="modal_modify"]').val();
+    if (modify !== 'on') {
+        $('#getid').val(window.current_cid || '2');
     }
     
-    fetch(tx_host + '?txact=add', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.err) {
-            alert(data.msg);
-        } else {
-            if (continueAdd) {
-                modalForm.querySelector('[name="modal_name"]').value = '';
-                modalForm.querySelector('[name="modal_url"]').value = '';
-                modalForm.querySelector('[name="modal_img"]').value = '';
-                txpostajax(tx_host + '?txact=list&cid=' + window.current_cid);
+    var result = txpostsubmitCustom(form, 'post', 'add');
+    
+    if (!continueAdd) {
+        setTimeout(function() {
+            closeAddTabModal();
+        }, 500);
+    }
+    
+    return result;
+}
+
+function txpostsubmitCustom(form, type, action) {
+    console.log('txpostsubmitCustom 被调用, form:', form, 'type:', type, 'action:', action);
+    var $form = $(form);
+    console.log('$form:', $form);
+    
+    var nameInput = $form.find('input[name="modal_name"]');
+    var name = nameInput.val();
+    console.log('nameInput:', nameInput, 'name:', name);
+    
+    var urlInput = $form.find('input[name="modal_url"]');
+    var url = urlInput.val();
+    console.log('urlInput:', urlInput, 'url:', url);
+    
+    if (!name || name === '') {
+        alert('标题没有填写！');
+        return false;
+    }
+    if (!url || url === '') {
+        alert('网站链接没有填写！');
+        return false;
+    }
+    
+    var color = $form.find('input[name="modal_color"]').val() || '#ffffff';
+    
+    var postData = {
+        name: name,
+        url: url,
+        img: $form.find('input[name="modal_img"]').val() || '',
+        info: color,
+        order: $form.find('input[name="modal_order"]').val() || '99',
+        cateID: window.current_cid || '2',
+        author: $form.find('input[name="modal_author"]').val() || '',
+        token: $form.find('input[name="modal_token"]').val() || '',
+        modify: $form.find('input[name="modal_modify"]').val() || '',
+        type: type,
+        action: action
+    };
+    
+    console.log('提交的数据:', postData);
+    console.log('bloghost:', bloghost);
+    console.log('提交地址:', bloghost + 'zb_users/plugin/wx_nav/plugin/acceptdata.php');
+    
+    if (postData.modify === 'on') {
+        postData.cateID = $('#getid').val();
+    }
+    
+    $.post(bloghost + 'zb_users/plugin/wx_nav/plugin/acceptdata.php', postData, function(data) {
+        console.log('acceptdata.php 返回:', data);
+        txTips(data);
+        setTimeout(function() {
+            var cid = window.current_cid || getCurrentCid();
+            if (cid) {
+                window.location.href = window.location.pathname + '?cid=' + cid;
             } else {
-                closeAddTabModal();
-                txpostajax(tx_host + '?txact=list&cid=' + window.current_cid);
+                window.location.reload();
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('提交失败');
+        }, 800);
+    }).fail(function(xhr, status, error) {
+        console.log('请求失败:', xhr, status, error);
+        alert('请求失败，请查看控制台！');
     });
     
     return false;
 }
 
-// 滚轮切换分类功能 - 修复版
-// 增大阈值到80，避免阻止正常页面滚动
-var wheelScrollThreshold = 80;
-var wheelScrollTimeout = null;
 
-document.addEventListener('wheel', function(e) {
-    // 如果有弹窗，不处理滚轮
-    if ($('.tx-pop').length > 0 || $('.set-on-box').length > 0) {
-        return;
+
+
+
+/* 🔴 终极颜色绑定 - mousedown 优先级最高！干掉所有旧绑定！ */
+$(document).off('mousedown', '.add-tab-modal .color-option:not(.color-picker-wrap)').on('mousedown', '.add-tab-modal .color-option:not(.color-picker-wrap)', function(e) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    
+    var colorOptions = $('.add-tab-modal .color-option:not(.color-picker-wrap)');
+    var colorInput = $('.tab-pane[data-tab="manual"] input[name="modal_color"]');
+    
+    colorOptions.removeClass('active');
+    $(this).addClass('active');
+    
+    var bgColor = $(this).attr('data-color') || '#ffffff';
+    colorInput.val(bgColor);
+    
+    return false;
+});
+
+/* 🔴 终极暴力上色！原生 JS 干死 CSS !important！ */
+function forceColorOnIcons() {
+    var items = document.querySelectorAll('.set-item[data-bg-color]');
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var bgColor = item.getAttribute('data-bg-color');
+        if (bgColor) {
+            var img = item.querySelector('.data-img');
+            if (img) {
+                img.style.backgroundColor = bgColor;
+                img.setAttribute('style', 'background-color: ' + bgColor + ' !important;');
+            }
+        }
+    }
+}
+
+$(function() {
+    setTimeout(forceColorOnIcons, 100);
+    setTimeout(forceColorOnIcons, 300);
+    setTimeout(forceColorOnIcons, 800);
+    setTimeout(forceColorOnIcons, 1500);
+});
+
+/* 🔴 鼠标滚轮切换分类功能 - 官方演示站同款顺滑效果 */
+var cateScrollLock = false;
+function switchCateByScroll(direction) {
+    if (cateScrollLock) return;
+    
+    var allCates = [];
+    document.querySelectorAll('.ajax-item').forEach(function(item) {
+        var urlMatch = item.dataset.url && item.dataset.url.match(/cid=(\d+)/);
+        if (urlMatch && urlMatch[1]) {
+            allCates.push({
+                id: urlMatch[1],
+                url: item.dataset.url,
+                element: item
+            });
+        }
+    });
+    
+    if (allCates.length === 0) return;
+    
+    var currentCid = window.current_cid || getCurrentCid();
+    var currentIndex = allCates.findIndex(function(c) { return c.id == currentCid; });
+    
+    if (currentIndex === -1) currentIndex = 0;
+    
+    if (direction === 'down') {
+        currentIndex = (currentIndex + 1) % allCates.length;
+    } else {
+        currentIndex = (currentIndex - 1 + allCates.length) % allCates.length;
     }
     
-    // 只有大幅滚动才切换分类
-    if (Math.abs(e.deltaY) > wheelScrollThreshold) {
-        e.preventDefault();
-        
-        // 防抖处理
-        if (wheelScrollTimeout) {
-            clearTimeout(wheelScrollTimeout);
-        }
-        
-        wheelScrollTimeout = setTimeout(function() {
-            if (e.deltaY > 0) {
-                // 向下滚动，切换到下一个分类
-                switchCateByScroll('down');
-            } else if (e.deltaY < 0) {
-                // 向上滚动，切换到上一个分类
-                switchCateByScroll('up');
-            }
-        }, 100);
-    }
-}, { passive: false });
+    var targetCate = allCates[currentIndex];
+    window.current_cid = targetCate.id;
+    
+    switchCateWithAnimation(targetCate.url, direction);
+    
+    cateScrollLock = true;
+    setTimeout(function() { cateScrollLock = false; }, 1000);
+}
 
-// 分类切换函数 - 修复版，确保函数完整性
+/* 🔴 分类切换动画 - 滚轮/点击共用 */
 function switchCateWithAnimation(url, direction) {
     var mainInfo = document.querySelector('.main-info');
     if (mainInfo) {
@@ -721,10 +1137,10 @@ function switchCateWithAnimation(url, direction) {
             mainInfo.style.transform = 'scale(0.95)';
         }
         mainInfo.style.opacity = '0';
-
+        
         setTimeout(function() {
             txpostajax(url);
-
+            
             setTimeout(function() {
                 var newMainInfo = document.querySelector('.main-info');
                 if (newMainInfo) {
@@ -748,29 +1164,22 @@ function switchCateWithAnimation(url, direction) {
     }
 }
 
-// 滚轮切换分类逻辑
-function switchCateByScroll(direction) {
-    var sidebarItems = document.querySelectorAll('.sidebar-cate-item:not(.sidebar-add-cate)');
-    var currentItem = document.querySelector('.sidebar-cate-item.on');
-    var currentIndex = 0;
+/* 🔴 滚轮事件监听 - 修复版：阈值从 20 改为 80，避免阻止正常页面滚动 */
+document.addEventListener('wheel', function(e) {
+    if ($('.tx-pop').length > 0 || $('.set-on-box').length > 0) {
+        return;
+    }
     
-    sidebarItems.forEach(function(item, index) {
-        if (item === currentItem) {
-            currentIndex = index;
+    // 修复：增大阈值到 80，只有大幅滚动才切换分类
+    var deltaThreshold = 80;
+    if (Math.abs(e.deltaY) > deltaThreshold) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+            switchCateByScroll('down');
+        } else if (e.deltaY < 0) {
+            switchCateByScroll('up');
         }
-    });
-    
-    var nextIndex;
-    if (direction === 'down') {
-        nextIndex = (currentIndex + 1) % sidebarItems.length;
-    } else {
-        nextIndex = (currentIndex - 1 + sidebarItems.length) % sidebarItems.length;
     }
-    
-    var nextItem = sidebarItems[nextIndex];
-    if (nextItem) {
-        nextItem.click();
-    }
-}
+}, { passive: false });
 
 console.log('MTAB JS v1.54 加载完成 - 滚轮阈值已修复为 80');
