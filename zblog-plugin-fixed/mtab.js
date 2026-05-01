@@ -795,6 +795,15 @@ function initCurrentCid() {
     }
 }
 
+function getCurrentCid() {
+    var cid = window.current_cid;
+    if (!cid) {
+        var urlParams = new URLSearchParams(window.location.search);
+        cid = urlParams.get('cid');
+    }
+    return cid || '2';
+}
+
 function initColorOptions() {
     var colorOptions = document.querySelectorAll('.add-tab-modal .color-option:not(.color-picker-wrap)');
     var colorPicker = document.getElementById('bgColorPicker');
